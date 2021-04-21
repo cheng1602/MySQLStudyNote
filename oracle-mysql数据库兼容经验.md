@@ -37,8 +37,8 @@ Oracle 迁移至 MySQL
 - rownum
 
   ```sql
-  select * from td_ec_share_up_lic_data t
-  		where t.is_system = '1'
+  select * from (select @rownum:=@rownum+1 rownum, tt.* from td_ec_share_up_lic_data tt, (SELECT @rownum:=0) r)t
+  		    where t.is_system = '1'
   			and t.cd_operation !='D'
   			and t.system_id is null
   			and substr(t.certificateareacode, 1, 4) = #{areaCode,jdbcType=VARCHAR}
@@ -46,12 +46,11 @@ Oracle 迁移至 MySQL
   ```
 
   ```sql
-  select  t.* from td_ec_share_up_lic_data t,(SELECT @rownum:=0) r 
-  		where t.is_system = '1'
+  select * from (select @rownum:=@rownum+1 rownum, tt.* from td_ec_share_up_lic_data tt, (SELECT @rownum:=0) r)t
+  			where t.is_system = '1'
   			and t.cd_operation !='D'
-  			and t.system_id is null
-  			and substr(t.certificateareacode, 1, 4) = #{areaCode,jdbcType=VARCHAR}
-  			and @rownum:=@rownum+1 &lt; #{maxNumb}
+  			and t.system_id = #{provincial_tyshxydm,jdbcType=VARCHAR}
+  			and rownum &lt; #{maxNumb}
   ```
 
 
@@ -70,3 +69,10 @@ Oracle 迁移至 MySQL
 
   `date_format(#{time},'%Y%m%d')`
 
+
+
+- substr函数
+
+  Oracle中可以从0位开始截取
+
+  MySQL中必须从大于等于1位开始截取，从0位开始无法截取出数据
